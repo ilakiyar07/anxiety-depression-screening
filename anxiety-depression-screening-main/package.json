@@ -1,0 +1,23 @@
+{
+  "name": "anxiety-and-depression-screening-system",
+  "version": "1.0.0",
+  "description": "Full-stack Anxiety and Depression Screening System using standardized GAD-7 and PHQ-9 instruments, Express, React, and PostgreSQL with local SQLite fallback.",
+  "scripts": {
+    "start": "node backend/server.js",
+    "backend": "node backend/server.js",
+    "frontend": "npm --prefix frontend run dev",
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"cyan,magenta\" \"node backend/server.js\" \"npm --prefix frontend run dev\"",
+    "test": "node backend/tests/test_api.js",
+    "seed": "node backend/services/seedService.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "concurrently": "^9.1.2",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.1"
+  }
+}
