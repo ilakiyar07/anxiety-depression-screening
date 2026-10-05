@@ -11,12 +11,6 @@ async function getQuestions(req, res) {
 
     const gad7 = questions.filter(q => q.questionnaire_type === 'GAD-7');
     const phq9 = questions.filter(q => q.questionnaire_type === 'PHQ-9');
-    const options = [
-      { value: 0, label: 'Not at all', description: '0 days in past 2 weeks' },
-      { value: 1, label: 'Several days', description: '1-6 days in past 2 weeks' },
-      { value: 2, label: 'More than half the days', description: '7-11 days in past 2 weeks' },
-      { value: 3, label: 'Nearly every day', description: '12-14 days in past 2 weeks' }
-    ];
 
     return res.json({
       instruments: {
@@ -31,7 +25,12 @@ async function getQuestions(req, res) {
           questions: phq9
         }
       },
-      options,
+      options: [
+        { value: 0, label: 'Not at all', description: '0 days in past 2 weeks' },
+        { value: 1, label: 'Several days', description: '1-6 days in past 2 weeks' },
+        { value: 2, label: 'More than half the days', description: '7-11 days in past 2 weeks' },
+        { value: 3, label: 'Nearly every day', description: '12-14 days in past 2 weeks' }
+      ],
       disclaimer: 'This screening tool is for educational and self-reflection purposes only and does not constitute a clinical diagnosis.'
     });
   } catch (err) {
@@ -45,32 +44,29 @@ async function submitScreening(req, res) {
     const userId = req.user.id;
     const { answers, notes } = req.body;
 
-    if (!Array.isArray(answers) || answers.length === 0) {
+    if (!answers || !Array.isArray(answers) || answers.length === 0) {
       return res.status(400).json({ error: 'Please submit responses for all questionnaire items.' });
     }
 
     const dbQuestions = await db.all(
       'SELECT id, code, questionnaire_type, question_order FROM questions'
     );
-    const questionMap = new Map(dbQuestions.map(q => [Number(q.id), q]));
+
+    const questionMap = new Map();
+    dbQuestions.forEach(q => questionMap.set(q.id, q));
 
     const enrichedResponses = [];
     for (const ans of answers) {
-      const questionId = Number(ans.questionId);
-      const answerValue = Number(ans.answerValue);
-      const q = questionMap.get(questionId);
+      const q = questionMap.get(ans.questionId);
       if (!q) {
         return res.status(400).json({ error: `Question with ID ${ans.questionId} not found.` });
-      }
-      if (![0, 1, 2, 3].includes(answerValue)) {
-        return res.status(400).json({ error: `Invalid answer value for question ${ans.questionId}.` });
       }
       enrichedResponses.push({
         questionId: q.id,
         code: q.code,
         questionnaireType: q.questionnaire_type,
         questionOrder: q.question_order,
-        answerValue
+        answerValue: ans.answerValue
       });
     }
 
@@ -99,6 +95,7 @@ async function submitScreening(req, res) {
       ]);
 
       const id = screeningInfo.lastInsertRowid;
+
       for (const item of enrichedResponses) {
         const label = ANSWER_LABELS[item.answerValue] || 'Unknown';
         await tx.run(`
@@ -106,10 +103,14 @@ async function submitScreening(req, res) {
           VALUES (?, ?, ?, ?)
         `, [id, item.questionId, item.answerValue, label]);
       }
+
       return id;
     });
 
-    const createdScreening = await db.get('SELECT * FROM screenings WHERE id = ?', [screeningId]);
+    const createdScreening = await db.get(
+      'SELECT * FROM screenings WHERE id = ?',
+      [screeningId]
+    );
 
     return res.status(201).json({
       message: 'Screening assessment successfully submitted and evaluated.',
@@ -142,6 +143,7 @@ async function getScreenings(req, res) {
       WHERE user_id = ?
       ORDER BY screening_date DESC
     `, [req.user.id]);
+
     return res.json({ screenings });
   } catch (err) {
     console.error('[Get Screenings Error]', err);
@@ -152,6 +154,7 @@ async function getScreenings(req, res) {
 async function getScreeningById(req, res) {
   try {
     const { id } = req.params;
+
     const screening = await db.get(`
       SELECT s.*, u.name as user_name, u.email as user_email
       FROM screenings s
@@ -159,7 +162,10 @@ async function getScreeningById(req, res) {
       WHERE s.id = ?
     `, [id]);
 
-    if (!screening) return res.status(404).json({ error: 'Screening assessment record not found.' });
+    if (!screening) {
+      return res.status(404).json({ error: 'Screening assessment record not found.' });
+    }
+
     if (req.user.role !== 'admin' && Number(screening.user_id) !== Number(req.user.id)) {
       return res.status(403).json({ error: 'Unauthorized to view this screening record.' });
     }
@@ -173,10 +179,10 @@ async function getScreeningById(req, res) {
       ORDER BY q.questionnaire_type ASC, q.question_order ASC
     `, [id]);
 
-    const anxietyInterpretation = interpretGAD7(Number(screening.anxiety_score));
+    const anxietyInterpretation = interpretGAD7(screening.anxiety_score);
     const q9Response = responses.find(r => r.code === 'PHQ9_9');
-    const item9Score = q9Response ? Number(q9Response.answer_value) : 0;
-    const depressionInterpretation = interpretPHQ9(Number(screening.depression_score), item9Score);
+    const item9Score = q9Response ? q9Response.answer_value : 0;
+    const depressionInterpretation = interpretPHQ9(screening.depression_score, item9Score);
 
     return res.json({
       screening,

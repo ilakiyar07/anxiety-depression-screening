@@ -49,7 +49,11 @@ async function register(req, res) {
       { expiresIn: '7d' }
     );
 
-    return res.status(201).json({ message: 'Registration successful.', token, user: newUser });
+    return res.status(201).json({
+      message: 'Registration successful.',
+      token,
+      user: newUser
+    });
   } catch (err) {
     console.error('[Register Error]', err);
     return res.status(500).json({ error: 'A server error occurred during registration. Please try again.' });
@@ -59,6 +63,7 @@ async function register(req, res) {
 async function login(req, res) {
   try {
     const { email, password } = req.body;
+
     if (!email || !password) {
       return res.status(400).json({ error: 'Please enter both email and password.' });
     }
@@ -66,7 +71,12 @@ async function login(req, res) {
     const cleanEmail = email.trim().toLowerCase();
     const user = await db.get('SELECT * FROM users WHERE email = ?', [cleanEmail]);
 
-    if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email address or password.' });
+    }
+
+    const validPassword = bcrypt.compareSync(password, user.password_hash);
+    if (!validPassword) {
       return res.status(401).json({ error: 'Invalid email address or password.' });
     }
 

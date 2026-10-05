@@ -4,7 +4,11 @@ const { interpretGAD7, interpretPHQ9 } = require('../services/scoringService');
 async function getDashboardData(req, res) {
   try {
     const userId = req.user.id;
-    const countResult = await db.get('SELECT COUNT(*) as total FROM screenings WHERE user_id = ?', [userId]);
+
+    const countResult = await db.get(
+      'SELECT COUNT(*) as total FROM screenings WHERE user_id = ?',
+      [userId]
+    );
     const totalScreenings = countResult ? Number(countResult.total) : 0;
 
     const latestScreening = await db.get(`
@@ -22,22 +26,33 @@ async function getDashboardData(req, res) {
         WHERE user_id = ?
         ORDER BY screening_date DESC
         LIMIT 10
-      ) AS recent
+      ) AS recent_screenings
       ORDER BY screening_date ASC
     `, [userId]);
 
     const chartData = {
-      labels: historyTrends.map(item => new Date(item.screening_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })),
+      labels: historyTrends.map(item =>
+        new Date(item.screening_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      ),
       anxietyScores: historyTrends.map(item => Number(item.anxiety_score)),
       depressionScores: historyTrends.map(item => Number(item.depression_score)),
       dates: historyTrends.map(item => item.screening_date)
     };
 
-    const latestAnxietyInfo = latestScreening ? interpretGAD7(Number(latestScreening.anxiety_score)) : null;
-    const latestDepressionInfo = latestScreening ? interpretPHQ9(Number(latestScreening.depression_score)) : null;
+    let latestAnxietyInfo = null;
+    let latestDepressionInfo = null;
+    if (latestScreening) {
+      latestAnxietyInfo = interpretGAD7(latestScreening.anxiety_score);
+      latestDepressionInfo = interpretPHQ9(latestScreening.depression_score);
+    }
 
     return res.json({
-      user: { id: req.user.id, name: req.user.name, email: req.user.email, role: req.user.role },
+      user: {
+        id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role
+      },
       stats: {
         totalScreenings,
         latestScreening: latestScreening || null,

@@ -187,19 +187,7 @@ const db = {
 
   async transaction(callback) {
     if (!isPostgres) {
-      // The application-level database API is async so controllers work the same
-      // with SQLite and PostgreSQL. For the local SQLite fallback, execute the
-      // callback through the same async wrapper; PostgreSQL gets a real transaction.
-      const txDb = {
-        async get(sql, params = []) { return dbInstance.prepare(sql).get(...params); },
-        async all(sql, params = []) { return dbInstance.prepare(sql).all(...params); },
-        async run(sql, params = []) {
-          const info = dbInstance.prepare(sql).run(...params);
-          return { lastInsertRowid: info.lastInsertRowid, changes: info.changes, rowCount: info.changes };
-        },
-        async exec(sql) { return dbInstance.exec(sql); }
-      };
-      return callback(txDb);
+      return callback(db);
     }
 
     const client = await pgPool.connect();

@@ -1,7 +1,7 @@
 {
   "name": "anxiety-and-depression-screening-system",
   "version": "1.0.0",
-  "description": "Full-stack Anxiety and Depression Screening System using standardized GAD-7 and PHQ-9 instruments, Express, React, and PostgreSQL with local SQLite fallback.",
+  "description": "Full-stack Anxiety and Depression Screening System using standardized GAD-7 and PHQ-9 clinical instruments, Express, React, and SQLite.",
   "scripts": {
     "start": "node backend/server.js",
     "backend": "node backend/server.js",
