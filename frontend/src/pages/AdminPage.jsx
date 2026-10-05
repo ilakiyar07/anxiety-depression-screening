@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import {
   Shield,
@@ -312,7 +313,7 @@ export default function AdminPage() {
                       </span>
                     </td>
                     <td className="py-3.5 px-3 text-slate-600">
-                      {new Date(s.screening_date).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                      {new Date(s.screening_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                     </td>
                     <td className="py-3.5 px-3">
                       <span className="font-bold text-slate-900 mr-2">{s.anxiety_score}</span>
@@ -337,12 +338,12 @@ export default function AdminPage() {
                       )}
                     </td>
                     <td className="py-3.5 px-3 text-right">
-                      <a
-                        href={`/results/${s.id}`}
+                      <Link
+                        to={`/results/${s.id}`}
                         className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg font-bold text-xs transition"
                       >
                         Inspect
-                      </a>
+                      </Link>
                     </td>
                   </tr>
                 ))}

@@ -58,7 +58,12 @@ async function getAdminStatistics(req, res) {
         anxiety: anxietyDist.map(row => ({ ...row, count: Number(row.count) })),
         depression: depressionDist.map(row => ({ ...row, count: Number(row.count) }))
       },
-      recentScreenings
+      recentScreenings: recentScreenings.map(row => ({
+        ...row,
+        anxiety_score: Number(row.anxiety_score),
+        depression_score: Number(row.depression_score),
+        requires_safety_alert: Number(row.requires_safety_alert || 0)
+      }))
     });
   } catch (err) {
     console.error('[Admin Statistics Error]', err);

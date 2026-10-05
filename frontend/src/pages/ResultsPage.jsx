@@ -88,7 +88,7 @@ export default function ResultsPage() {
           </h1>
           <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-1">
             <Calendar className="w-3.5 h-3.5" />
-            Completed on {new Date(screening.screening_date).toLocaleDateString(undefined, { dateStyle: 'full', timeStyle: 'short' })}
+            Completed on {new Date(screening.screening_date).toLocaleString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
           </p>
         </div>
 

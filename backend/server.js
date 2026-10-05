@@ -17,11 +17,9 @@ async function startServer() {
     // Always initialize the schema before querying it.
     await db.init();
 
-    // Seed if questions table is empty.
-    const questionCount = await db.get('SELECT COUNT(*) as count FROM questions');
-    if (!questionCount || Number(questionCount.count) === 0) {
-      await seedDatabase();
-    }
+    // Ensure required questions and demo accounts exist. The seed is idempotent
+    // and does not overwrite existing user credentials.
+    await seedDatabase();
 
     // Middleware
     const allowedOrigin = process.env.FRONTEND_URL;

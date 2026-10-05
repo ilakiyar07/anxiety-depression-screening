@@ -49,19 +49,13 @@ async function seedDatabase() {
   await db.run(`
     INSERT INTO users (name, email, password_hash, role)
     VALUES (?, ?, ?, 'user')
-    ON CONFLICT(email) DO UPDATE SET
-      name = excluded.name,
-      password_hash = excluded.password_hash,
-      role = excluded.role
+    ON CONFLICT(email) DO NOTHING
   `, ['Demo Student', 'demo@student.edu', userPasswordHash]);
 
   await db.run(`
     INSERT INTO users (name, email, password_hash, role)
     VALUES (?, ?, ?, 'admin')
-    ON CONFLICT(email) DO UPDATE SET
-      name = excluded.name,
-      password_hash = excluded.password_hash,
-      role = excluded.role
+    ON CONFLICT(email) DO NOTHING
   `, ['System Administrator', 'admin@screening.org', adminPasswordHash]);
 
   console.log('[Seed] Demo accounts verified: demo@student.edu and admin@screening.org');

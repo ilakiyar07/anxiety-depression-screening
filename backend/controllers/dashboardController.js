@@ -30,6 +30,15 @@ async function getDashboardData(req, res) {
       ORDER BY screening_date ASC
     `, [userId]);
 
+    const normalizedLatestScreening = latestScreening
+      ? {
+          ...latestScreening,
+          anxiety_score: Number(latestScreening.anxiety_score),
+          depression_score: Number(latestScreening.depression_score),
+          requires_safety_alert: Number(latestScreening.requires_safety_alert || 0)
+        }
+      : null;
+
     const chartData = {
       labels: historyTrends.map(item =>
         new Date(item.screening_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
@@ -41,9 +50,9 @@ async function getDashboardData(req, res) {
 
     let latestAnxietyInfo = null;
     let latestDepressionInfo = null;
-    if (latestScreening) {
-      latestAnxietyInfo = interpretGAD7(latestScreening.anxiety_score);
-      latestDepressionInfo = interpretPHQ9(latestScreening.depression_score);
+    if (normalizedLatestScreening) {
+      latestAnxietyInfo = interpretGAD7(normalizedLatestScreening.anxiety_score);
+      latestDepressionInfo = interpretPHQ9(normalizedLatestScreening.depression_score);
     }
 
     return res.json({
@@ -55,12 +64,17 @@ async function getDashboardData(req, res) {
       },
       stats: {
         totalScreenings,
-        latestScreening: latestScreening || null,
+        latestScreening: normalizedLatestScreening,
         latestAnxiety: latestAnxietyInfo,
         latestDepression: latestDepressionInfo
       },
       trends: chartData,
-      recentScreenings: historyTrends.slice().reverse().slice(0, 5)
+      recentScreenings: historyTrends.slice().reverse().slice(0, 5).map(item => ({
+        ...item,
+        anxiety_score: Number(item.anxiety_score),
+        depression_score: Number(item.depression_score),
+        requires_safety_alert: Number(item.requires_safety_alert || 0)
+      }))
     });
   } catch (err) {
     console.error('[Dashboard Error]', err);

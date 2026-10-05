@@ -135,7 +135,7 @@ export default function DashboardPage() {
             </h2>
             <span className="text-xs text-slate-500 flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
-              Taken on {new Date(stats.latestScreening.screening_date).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+              Taken on {new Date(stats.latestScreening.screening_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
             </span>
           </div>
 

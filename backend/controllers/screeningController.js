@@ -144,7 +144,14 @@ async function getScreenings(req, res) {
       ORDER BY screening_date DESC
     `, [req.user.id]);
 
-    return res.json({ screenings });
+    return res.json({
+      screenings: screenings.map(item => ({
+        ...item,
+        anxiety_score: Number(item.anxiety_score),
+        depression_score: Number(item.depression_score),
+        requires_safety_alert: Number(item.requires_safety_alert || 0)
+      }))
+    });
   } catch (err) {
     console.error('[Get Screenings Error]', err);
     return res.status(500).json({ error: 'Failed to retrieve screening history.' });
